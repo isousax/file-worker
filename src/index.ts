@@ -21,6 +21,16 @@ export default {
 			return await handlePublicFile(key, env);
 		}
 
+		if (request.method === "OPTIONS") {
+			return new Response(null, {
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Allow-Methods": "PUT, OPTIONS, GET",
+					"Access-Control-Allow-Headers": "Content-Type"
+				}
+			});
+		}
+
 		return new Response(
 			JSON.stringify({ error: "Rota não encontrada." }),
 			{ status: 404, headers: { "Content-Type": "application/json" } }
