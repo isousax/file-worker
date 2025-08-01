@@ -1,26 +1,29 @@
-import { fromHono } from "chanfana";
-import { Hono } from "hono";
-import { TaskCreate } from "./endpoints/taskCreate";
-import { TaskDelete } from "./endpoints/taskDelete";
-import { TaskFetch } from "./endpoints/taskFetch";
-import { TaskList } from "./endpoints/taskList";
+import type { R2Bucket } from "@cloudflare/workers-types";
+import { handleUpload } from "./endpoints/handleUpload";
+import { handlePublicFile } from "./endpoints/handlePublicFile";
 
-// Start a Hono app
-const app = new Hono<{ Bindings: Env }>();
+export interface Env {
+	R2: R2Bucket;
+	DNS: string;
+}
 
-// Setup OpenAPI registry
-const openapi = fromHono(app, {
-	docs_url: "/",
-});
+export default {
+	async fetch(request: Request, env: Env): Promise<Response> {
+		const url = new URL(request.url);
+		const { pathname } = url;
 
-// Register OpenAPI endpoints
-openapi.get("/api/tasks", TaskList);
-openapi.post("/api/tasks", TaskCreate);
-openapi.get("/api/tasks/:taskSlug", TaskFetch);
-openapi.delete("/api/tasks/:taskSlug", TaskDelete);
+		if (request.method === "PUT" && pathname === "/upload") {
+			return await handleUpload(request, env);
+		}
 
-// You may also register routes for non OpenAPI directly on Hono
-// app.get('/test', (c) => c.text('Hono!'))
+		if (request.method === "GET" && pathname.startsWith("/file/")) {
+			const key = pathname.replace("/file/", "");
+			return await handlePublicFile(key, env);
+		}
 
-// Export the Hono app
-export default app;
+		return new Response(
+			JSON.stringify({ error: "Rota não encontrada." }),
+			{ status: 404, headers: { "Content-Type": "application/json" } }
+		);
+	},
+};
