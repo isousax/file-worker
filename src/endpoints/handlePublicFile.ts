@@ -25,7 +25,7 @@ export async function handlePublicFile(key: string, env: Env): Promise<Response>
 
     const headers = new Headers();
     headers.set("Content-Type", object.httpMetadata?.contentType || "application/octet-stream");
-    headers.set("Cache-Control", "public, max-age=31536000");
+    headers.set("Cache-Control", "public, max-age=1728000");
     headers.set("Access-Control-Allow-Origin", "*");
     headers.set("Access-Control-Allow-Methods", "GET");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
