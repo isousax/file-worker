@@ -7,7 +7,7 @@
 		"enabled": true
 	},
 	"vars": {
-		"DNS": "dedicart.online"
+		"DNS": "dedicart-file-worker.dedicart.workers.dev"
 	},
 	"r2_buckets": [
 		{

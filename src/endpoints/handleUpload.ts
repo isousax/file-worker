@@ -5,7 +5,7 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
   const key = url.searchParams.get("key");
 
   if (!key || !key.trim()) {
-    return new Response(JSON.stringify({ message: "Missing or invalid 'key' query param." }), {
+    return new Response(JSON.stringify({ message: "Parâmetros da requisição malformados." }), {
       status: 400,
       headers: {
         "Content-Type": "application/json",
@@ -16,7 +16,7 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
 
   const contentType = request.headers.get("Content-Type");
   if (!contentType || !contentType.startsWith("image/")) {
-    return new Response(JSON.stringify({ message: "Only image uploads are allowed." }), {
+    return new Response(JSON.stringify({ message: "Formato não suportado." }), {
       status: 415,
       headers: {
         "Content-Type": "application/json",
@@ -29,10 +29,10 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
   try {
     file = await request.arrayBuffer();
     if (file.byteLength === 0) {
-      throw new Error("Empty file");
+      throw new Error("Arquivo vazio.");
     }
   } catch (err) {
-    return new Response(JSON.stringify({ message: "Invalid file upload." }), {
+    return new Response(JSON.stringify({ message: "Upload de arquivo inválido." }), {
       status: 400,
       headers: {
         "Content-Type": "application/json",
@@ -57,7 +57,7 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
     });
   } catch (err) {
     console.error("Erro no upload:", err);
-    return new Response(JSON.stringify({ message: "Erro ao fazer upload para o R2." }), {
+    return new Response(JSON.stringify({ message: "Erro inesperado no servidor." }), {
       status: 500,
       headers: {
         "Content-Type": "application/json",
