@@ -1,10 +1,12 @@
 import type { R2Bucket } from "@cloudflare/workers-types";
 import { handleUpload } from "./endpoints/handleUpload";
 import { handlePublicFile } from "./endpoints/handlePublicFile";
+import { handleAI } from "./endpoints/handleAI";
 
 export interface Env {
 	R2: R2Bucket;
 	DNS: string;
+	AI: Ai;
 }
 
 export default {
@@ -19,6 +21,10 @@ export default {
 		if (request.method === "GET" && pathname.startsWith("/file/")) {
 			const key = pathname.replace("/file/", "");
 			return await handlePublicFile(key, env);
+		}
+
+		if (request.method === "POST" && pathname === "/ai") {
+			return await handleAI(request, env);
 		}
 
 		if (request.method === "OPTIONS") {
