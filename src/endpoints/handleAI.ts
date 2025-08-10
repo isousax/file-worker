@@ -1,6 +1,7 @@
 import { Env } from "../index";
 
-const DEFAULT_PROMPT = "Nosso relacionamento cheio de pequenos momentos especiais e muito carinho.";
+const DEFAULT_PROMPT =
+  "Nosso relacionamento cheio de pequenos momentos especiais e muito carinho.";
 
 export async function handleAI(request: Request, env: Env): Promise<Response> {
   let promptToUse = DEFAULT_PROMPT;
@@ -19,8 +20,10 @@ export async function handleAI(request: Request, env: Env): Promise<Response> {
       messages: [
         {
           role: "system",
-          content:
-            "Você é um assistente criativo e sensível especializado em criar títulos e descrições curtas, emocionais e românticas para dedicatórias e mensagens pessoais. Seu texto deve ser íntimo, positivo, cheio de afeto, e transmitir conexão e carinho de forma simples, porém poética. Use emojis sutis para dar mais vida ao texto.",
+          content: `Você é um assistente criativo e sensível especializado em criar títulos e descrições curtas, emocionais e românticas para dedicatórias e mensagens pessoais.
+                    Gere exatamente duas linhas: a primeira linha deve ser o título (curto e impactante, sem aspas), e a segunda linha deve ser a descrição (mais detalhada e poética, sem aspas).
+                    Use emojis para dar mais vida ao texto.
+                    Não inclua aspas, nem nenhum outro caractere extra`,
         },
         { role: "user", content: promptToUse },
       ],
@@ -33,7 +36,7 @@ export async function handleAI(request: Request, env: Env): Promise<Response> {
 
     const lines = content
       .split("\n")
-      .map((line) => line.trim())
+      .map(line => line.trim().replace(/^["']|["']$/g, ""))
       .filter(Boolean);
 
     const result = {
