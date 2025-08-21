@@ -1,17 +1,41 @@
 import { Env } from "../index";
+import { validateApiKey } from "../util/validateApiKey";
 
-export async function handleUpload(request: Request, env: Env): Promise<Response> {
+export async function handleUpload(
+  request: Request,
+  env: Env
+): Promise<Response> {
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
 
-  if (!key || !key.trim()) {
-    return new Response(JSON.stringify({ message: "Parâmetros da requisição malformados." }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+  if (
+    !validateApiKey(
+      request.headers.get("Authorization")?.split(" ")[1] || "",
+      env
+    )
+  ) {
+    console.info(
+      `Token inválido - Request Token: ${
+        request.headers.get("Authorization")?.split(" ")[1] || ""
+      } - Env Token: ${env.WORKER_API_KEY}`
+    );
+    return new Response(JSON.stringify({ message: "Token inválido." }), {
+      status: 401,
+      headers: createJsonHeaders(false),
     });
+  }
+
+  if (!key || !key.trim()) {
+    return new Response(
+      JSON.stringify({ message: "Parâmetros da requisição malformados." }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
   }
 
   const contentType = request.headers.get("Content-Type");
@@ -32,13 +56,16 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
       throw new Error("Arquivo vazio.");
     }
   } catch (err) {
-    return new Response(JSON.stringify({ message: "Upload de arquivo inválido." }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    return new Response(
+      JSON.stringify({ message: "Upload de arquivo inválido." }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
   }
 
   try {
@@ -57,12 +84,25 @@ export async function handleUpload(request: Request, env: Env): Promise<Response
     });
   } catch (err) {
     console.error("Erro no upload:", err);
-    return new Response(JSON.stringify({ message: "Erro inesperado no servidor." }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    return new Response(
+      JSON.stringify({ message: "Erro inesperado no servidor." }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+  }
+
+  function createJsonHeaders(cache = false): Headers {
+    const headers = new Headers();
+    headers.set("Content-Type", "application/json");
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Methods", "PUT");
+    headers.set("Access-Control-Allow-Headers", "Content-Type");
+    if (cache) headers.set("Cache-Control", "public, max-age=7200");
+    return headers;
   }
 }

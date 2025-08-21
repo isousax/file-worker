@@ -7,6 +7,7 @@ export interface Env {
 	R2: R2Bucket;
 	DNS: string;
 	AI: Ai;
+	WORKER_API_KEY: string;
 }
 
 export default {

@@ -1,9 +1,25 @@
 import { Env } from "../index";
+import { validateApiKey } from "../util/validateApiKey";
 
 const DEFAULT_PROMPT =
   "Nosso relacionamento cheio de pequenos momentos especiais e muito carinho.";
 
 export async function handleAI(request: Request, env: Env): Promise<Response> {
+
+  if (
+    !validateApiKey(
+      request.headers.get("Authorization")?.split(" ")[1] || "",
+      env
+    )
+  ) {
+    console.info(
+      `Token inválido - Request Token: ${
+        request.headers.get("Authorization")?.split(" ")[1] || ""
+      } - Env Token: ${env.WORKER_API_KEY}`
+    );
+    return jsonResponse({ message: "Token inválido." }, 401);
+  }
+
   let systemContent = `Você é um assistente criativo e sensível especializado em criar títulos e descrições curtas, emocionais e românticas para dedicatórias e mensagens pessoais.
 Gere exatamente duas linhas: a primeira linha deve ser o título (curto e impactante, sem aspas), e a segunda linha deve ser a descrição (mais detalhada e poética, sem aspas).
 Use emojis para dar mais vida ao texto.
