@@ -8,23 +8,6 @@ export async function handleUpload(
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
 
-  if (
-    !validateApiKey(
-      request.headers.get("Authorization")?.split(" ")[1] || "",
-      env
-    )
-  ) {
-    console.info(
-      `Token inválido - Request Token: ${
-        request.headers.get("Authorization")?.split(" ")[1] || ""
-      } - Env Token: ${env.WORKER_API_KEY}`
-    );
-    return new Response(JSON.stringify({ message: "Token inválido." }), {
-      status: 401,
-      headers: createJsonHeaders(false),
-    });
-  }
-
   if (!key || !key.trim()) {
     return new Response(
       JSON.stringify({ message: "Parâmetros da requisição malformados." }),
