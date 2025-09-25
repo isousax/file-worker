@@ -20,7 +20,7 @@ export default {
 			return await handleUpload(request, env);
 		}
 
-		if (request.method === "PUT" && pathname === "/temp/upload") {
+		if (request.method === "POST" && pathname === "/temp/upload") {
 			return await uploadToR2Handler(request, env);
 		}
 
