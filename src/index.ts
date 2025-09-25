@@ -2,6 +2,7 @@ import type { R2Bucket } from "@cloudflare/workers-types";
 import { handleUpload } from "./endpoints/handleUpload";
 import { handlePublicFile } from "./endpoints/handlePublicFile";
 import { handleAI } from "./endpoints/handleAI";
+import { uploadToR2Handler } from "./endpoints/uploadToR2Handler";
 
 export interface Env {
 	R2: R2Bucket;
@@ -19,6 +20,10 @@ export default {
 			return await handleUpload(request, env);
 		}
 
+		if (request.method === "PUT" && pathname === "/temp/upload") {
+			return await uploadToR2Handler(request, env);
+		}
+
 		if (request.method === "GET" && pathname.startsWith("/file/")) {
 			const key = pathname.replace("/file/", "");
 			return await handlePublicFile(key, env);
@@ -27,6 +32,7 @@ export default {
 		if (request.method === "POST" && pathname === "/ai") {
 			return await handleAI(request, env);
 		}
+
 
 		if (request.method === "OPTIONS") {
 			return new Response(null, {
