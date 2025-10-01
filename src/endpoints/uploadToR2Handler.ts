@@ -44,10 +44,10 @@ export async function uploadToR2Handler(
       return jsonResponse({ error: "Arquivo é obrigatório" }, 400);
     }
 
-    // Verificar se é um arquivo .zip
-    if (!file.name.toLowerCase().endsWith('.zip')) {
+    // ✅ Verificar se é um arquivo .txt
+    if (!file.name.toLowerCase().endsWith('.txt')) {
       console.warn("[uploadToR2Handler] tipo de arquivo inválido:", file.name);
-      return jsonResponse({ error: "Apenas arquivos .zip são aceitos" }, 400);
+      return jsonResponse({ error: "Apenas arquivos .txt são aceitos" }, 400);
     }
 
     // Verificar tamanho do arquivo (limite de 100MB)
@@ -67,10 +67,10 @@ export async function uploadToR2Handler(
     // Converter arquivo para ArrayBuffer
     const fileBuffer = await file.arrayBuffer();
 
-    // Upload para R2
+    // ✅ Upload para R2 com tipo text/plain
     await env.R2.put(fileKey, fileBuffer, {
       httpMetadata: {
-        contentType: 'application/zip',
+        contentType: 'text/plain',
         contentDisposition: `attachment; filename="${file.name}"`,
       },
       customMetadata: {
