@@ -59,8 +59,7 @@ export async function uploadToR2Handler(
 
     // Gerar chave única para o arquivo
     const timestamp = Date.now();
-    const randomId = crypto.randomUUID();
-    const fileKey = `uploads/${timestamp}-${randomId}-${file.name}`;
+    const fileKey = `uploadsTEXT/${timestamp}-${file.name}`;
 
     console.info("[uploadToR2Handler] fazendo upload do arquivo:", fileKey);
 
