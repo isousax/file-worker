@@ -14,7 +14,10 @@ const JSON_HEADERS = {
 };
 
 function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: JSON_HEADERS,
+  });
 }
 
 export async function uploadToR2Handler(
@@ -23,55 +26,76 @@ export async function uploadToR2Handler(
 ): Promise<Response> {
   console.info("[uploadToR2Handler] solicitação de upload recebida");
 
-  // Verificar se o método é POST
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Método não permitido" }, 405);
+    return jsonResponse({
+      error: "Método não permitido",
+    }, 405);
   }
 
-  // Verificar se R2 está disponível
   if (!env.R2) {
-    console.error("[uploadToR2Handler] R2 não configurado no ambiente");
-    return jsonResponse({ error: "Serviço de armazenamento não disponível" }, 500);
+    console.error("[uploadToR2Handler] R2 não configurado");
+
+    return jsonResponse({
+      error: "Serviço de armazenamento não disponível",
+    }, 500);
   }
 
   try {
-    // Obter o arquivo do FormData
     const formData = await request.formData();
+
     const file = formData.get("file") as File;
 
     if (!file) {
       console.warn("[uploadToR2Handler] arquivo não fornecido");
-      return jsonResponse({ error: "Arquivo é obrigatório" }, 400);
+
+      return jsonResponse({
+        error: "Arquivo é obrigatório",
+      }, 400);
     }
 
-    // ✅ Verificar se é um arquivo .txt
-    if (!file.name.toLowerCase().endsWith('.txt')) {
-      console.warn("[uploadToR2Handler] tipo de arquivo inválido:", file.name);
-      return jsonResponse({ error: "Apenas arquivos .txt são aceitos" }, 400);
+    const allowedExtensions = [".zip", ".7z", ".rar"];
+
+    const isValid = allowedExtensions.some((ext) =>
+      file.name.toLowerCase().endsWith(ext)
+    );
+
+    if (!isValid) {
+      return jsonResponse({
+        error: "Formato inválido",
+      }, 400);
     }
 
-    // Verificar tamanho do arquivo (limite de 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    const maxSize = 100 * 1024 * 1024;
+
     if (file.size > maxSize) {
-      console.warn("[uploadToR2Handler] arquivo muito grande:", file.size);
-      return jsonResponse({ error: "Arquivo muito grande. Máximo 100MB" }, 400);
+      console.warn(
+        "[uploadToR2Handler] arquivo muito grande:",
+        file.size
+      );
+
+      return jsonResponse({
+        error: "Arquivo muito grande. Máximo 100MB",
+      }, 400);
     }
 
-    // Gerar chave única para o arquivo
     const timestamp = Date.now();
-    const fileKey = `uploadsTEXT/${timestamp}-${file.name}`;
 
-    console.info("[uploadToR2Handler] fazendo upload do arquivo:", fileKey);
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-    // Converter arquivo para ArrayBuffer
-    const fileBuffer = await file.arrayBuffer();
+    const fileKey = `uploadsZIP/${timestamp}-${sanitizedFileName}`;
 
-    // ✅ Upload para R2 com tipo text/plain
-    await env.R2.put(fileKey, fileBuffer, {
+    console.info(
+      "[uploadToR2Handler] iniciando upload:",
+      fileKey
+    );
+
+    // STREAMING DIRETO PRO R2
+    await env.R2.put(fileKey, file.stream(), {
       httpMetadata: {
-        contentType: 'text/plain',
-        contentDisposition: `attachment; filename="${file.name}"`,
+        contentType: file.type || "application/octet-stream",
+        contentDisposition: `attachment; filename="${sanitizedFileName}"`,
       },
+
       customMetadata: {
         originalName: file.name,
         uploadedAt: new Date().toISOString(),
@@ -79,7 +103,10 @@ export async function uploadToR2Handler(
       },
     });
 
-    console.info("[uploadToR2Handler] upload concluído com sucesso:", fileKey);
+    console.info(
+      "[uploadToR2Handler] upload concluído:",
+      fileKey
+    );
 
     const response: UploadResponse = {
       success: true,
@@ -91,11 +118,18 @@ export async function uploadToR2Handler(
     return jsonResponse(response, 200);
 
   } catch (err: any) {
-    const msg = (err && (err.message || String(err))) || "erro desconhecido";
-    console.error("[uploadToR2Handler] erro inesperado:", {
+    const msg =
+      (err && (err.message || String(err))) ||
+      "erro desconhecido";
+
+    console.error("[uploadToR2Handler] erro:", {
       error: msg,
       stack: err?.stack,
     });
-    return jsonResponse({ error: "Erro interno do servidor" }, 500);
+
+    return jsonResponse({
+      error: "Erro interno do servidor",
+      details: msg,
+    }, 500);
   }
 }
