@@ -53,7 +53,7 @@ export async function uploadToR2Handler(
       }, 400);
     }
 
-    const allowedExtensions = [".zip", ".7z", ".rar"];
+    const allowedExtensions = [".zip", ".7z", ".rar", ".txt"];
 
     const isValid = allowedExtensions.some((ext) =>
       file.name.toLowerCase().endsWith(ext)
