@@ -21,10 +21,12 @@ export async function uploadToR2Handler(
   try {
     const data = await request.json();
 
-    if (!data?.file || typeof data.file !== "string") {
+    const textContent = data?.file ?? data?.txt;
+
+    if (!textContent || typeof textContent !== "string") {
       return new Response(
         JSON.stringify({
-          error: "Campo 'file' não informado ou inválido",
+          error: "Informe um campo 'file' ou 'txt' contendo uma string",
         }),
         { status: 400 }
       );
@@ -42,13 +44,14 @@ export async function uploadToR2Handler(
 
     console.info("[uploadToR2Handler] salvando:", fileKey);
 
-    await env.R2.put(fileKey, data.file, {
+    await env.R2.put(fileKey, textContent, {
       httpMetadata: {
         contentType: "text/plain; charset=utf-8",
         contentDisposition: `attachment; filename="${sanitizedFileName}"`,
       },
       customMetadata: {
         originalName: fileName,
+        sourceField: data?.file ? "file" : "txt",
         uploadedAt: new Date().toISOString(),
       },
     });
